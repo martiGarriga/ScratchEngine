@@ -9,6 +9,7 @@ Debug/
 Release/
 x64/Debug/
 x64/Release/
+x86/Debug/
 x86/Release/
 **/Debug/
 **/Release/
