@@ -1,3 +1,39 @@
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Archivos generados al compilar
+Debug/
+Release/
+x64/Debug/
+x64/Release/
+x86/Release/
+**/Debug/
+**/Release/
+**/x64/
+**/x86/
+
+# Archivos de compilacion
+*.obj
+*.pdb
+*.ilk
+*.pch
+*.idb
+*.ipch
+*.tlog
+*.lastbuildstate
+
+# Ejecutables y bibliotecas generados
+*.exe
+*.dll
+*.lib
+*.exp
+
+# Archivos temporales
+*.log
+
 # Prerequisites
 *.d
 
