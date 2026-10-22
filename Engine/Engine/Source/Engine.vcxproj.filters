@@ -20,6 +20,7 @@
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="SimpleMath.cpp" />
     <ClCompile Include="D3D12Module.cpp" />
+    <ClCompile Include="Exercice1.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3rdParty\imgui-1.89.8\backends\imgui_impl_win32.h" />
