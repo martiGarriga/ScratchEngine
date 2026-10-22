@@ -37,7 +37,19 @@ bool D3D12Module::init()
 	infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
 	infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
 	infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+
+	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
+	
 	return true;
+}
+
+void preRender() 
+{
+
+}
+void postRender() 
+{
+
 }
 
 bool D3D12Module::cleanUp()
