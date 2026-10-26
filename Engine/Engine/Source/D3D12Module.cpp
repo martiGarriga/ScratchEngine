@@ -54,7 +54,7 @@ bool D3D12Module::init()
 
 	for (UINT i = 0; i < bufferCount; ++i) 
 	{
-		HRESULT hrBuffer = swapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffers[i]));
+		HRESULT hrBuffer = swapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffers[i])); // Get the back buffer from the swap chain and store it in the backBuffers array
 		if (FAILED(hrBuffer))
 		{
 			LOG("Failed to get back buffer %d. HRESULT: 0x%08X", i,
@@ -63,7 +63,7 @@ bool D3D12Module::init()
 		}
 	}
 
-	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {}; //Descriptor Heap
 
 	rtvHeapDesc.NumDescriptors = bufferCount; // One descriptor for each back buffer
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV; // The heap will contain render target views
@@ -80,6 +80,12 @@ bool D3D12Module::init()
 	rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(
 		D3D12_DESCRIPTOR_HEAP_TYPE_RTV); // Get the size (in bytes) of a descriptor in the RTV heap
 
+	for (UINT i = 0; i < bufferCount; ++i)
+	{
+		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvCPUHandle(rtvHeap->GetCPUDescriptorHandleForHeapStart(), i, rtvDescriptorSize);
+
+		device->CreateRenderTargetView(backBuffers[i].Get(), nullptr, rtvCPUHandle);
+	}
 
 	factory->EnumAdapterByGpuPreference(0,DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,IID_PPV_ARGS(&adapter));
 	//LOG("Creating D3D12 device");
@@ -107,6 +113,31 @@ bool D3D12Module::init()
 		return false;
 	}
 
+	HRESULT hrAllocator = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator));
+	if (FAILED(hrAllocator))
+	{
+		LOG("Failed to create D3D12 command allocator. HRESULT: 0x%08X",
+			static_cast<unsigned int>(hrAllocator));
+		return false;
+	}
+
+	HRESULT hrCommandList = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList));
+	if (FAILED(hrCommandList))
+	{
+		LOG("Failed to create D3D12 command list. HRESULT: 0x%08X",
+			static_cast<unsigned int>(hrCommandList));
+		return false;
+	}
+
+	HRESULT hrFence = device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
+	if (FAILED(hrFence))
+	{
+		LOG("Failed to create D3D12 fence. HRESULT: 0x%08X",
+			static_cast<unsigned int>(hrFence));
+		return false;
+	}
+
+	fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);	
 
 	ComPtr<ID3D12InfoQueue> infoQueue;
 	//device.As(&infoQueue);
@@ -127,21 +158,37 @@ bool D3D12Module::init()
 	return true;
 }	
 
-D3D12Module::D3D12Module(HWND hwnd): hwnd(hwnd)
-{
+D3D12Module::D3D12Module(HWND hwnd): hwnd(hwnd) {}
 
+void D3D12Module::preRender()
+{
+	if (fenceValue != 0)
+	{
+		HRESULT hr = fence->SetEventOnCompletion(fenceValue, fenceEvent);
+		DWORD waitResult = WaitForSingleObject(fenceEvent, INFINITE);
+	}
+
+	commandAllocator->Reset();
 }
-//void preRender() 
-//{
-//
-//}
-//void postRender() 
-//{
-//
-//}
+void D3D12Module::postRender()
+{
+	++fenceValue;
+	HRESULT hr = commandQueue->Signal(fence.Get(), fenceValue);
+}
 
 bool D3D12Module::cleanUp()
 {
 	// Clean up Direct3D 12 resources here
+	if (fenceEvent)
+	{
+		if (fenceValue != 0)
+		{
+			HRESULT hr = fence->SetEventOnCompletion(fenceValue, fenceEvent);
+			DWORD waitResult = WaitForSingleObject(fenceEvent, INFINITE);
+		}
+
+		CloseHandle(fenceEvent);
+		fenceEvent = nullptr;
+	}
 	return true;
 }
