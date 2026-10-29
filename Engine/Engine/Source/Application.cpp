@@ -1,13 +1,20 @@
 #include "Globals.h"
 #include "Application.h"
 #include "D3D12Module.h"
+#include "Exercise1.h"
 #include "ModuleInput.h"
 
 
 Application::Application(int argc, wchar_t** argv, void* hWnd)
 {
+    D3D12Module* d3d12Module = new D3D12Module((HWND)hWnd);
+    modules.push_back(d3d12Module);
+
+    //Select exercice
+    modules.push_back(new Exercise1(d3d12Module));
+    //Next exercices here...
+
     modules.push_back(new ModuleInput((HWND)hWnd));
-	modules.push_back(new D3D12Module((HWND)hWnd));
 }
 
 Application::~Application()

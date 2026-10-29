@@ -43,12 +43,16 @@ bool D3D12Module::init()
 	swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED; // The alpha mode is unspecified
 	swapChainDesc.Flags = 0; // No flags
 
-	HRESULT hrSwapChain = factory->CreateSwapChainForHwnd(commandQueue.Get(), hwnd, &swapChainDesc, nullptr, nullptr, &swapChain);
+	ComPtr<IDXGISwapChain1> tempSwapChain;
 
-	if (FAILED(hrSwapChain))
+	HRESULT hrSwapChain = factory->CreateSwapChainForHwnd(commandQueue.Get(), hwnd, &swapChainDesc, nullptr, nullptr, &tempSwapChain);
+
+	HRESULT hrSwapChain3 = tempSwapChain.As(&swapChain);
+
+	if (FAILED(hrSwapChain3))
 	{
 		LOG("Failed to create swap chain. HRESULT: 0x%08X",
-			static_cast<unsigned int>(hrSwapChain));
+			static_cast<unsigned int>(hrSwapChain3));
 		return false;
 	}
 
@@ -113,15 +117,18 @@ bool D3D12Module::init()
 		return false;
 	}
 
-	HRESULT hrAllocator = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocator));
-	if (FAILED(hrAllocator))
+	for (UINT i = 0; i < bufferCount; ++i)
 	{
-		LOG("Failed to create D3D12 command allocator. HRESULT: 0x%08X",
-			static_cast<unsigned int>(hrAllocator));
-		return false;
-	}
+		HRESULT hrAllocator = device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocators[i]));
 
-	HRESULT hrCommandList = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocator.Get(), nullptr, IID_PPV_ARGS(&commandList));
+		if (FAILED(hrAllocator))
+		{
+			LOG("Failed to create command allocator");
+			return false;
+		}
+	}	
+
+	HRESULT hrCommandList = device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocators[0].Get(), nullptr, IID_PPV_ARGS(&commandList));
 	if (FAILED(hrCommandList))
 	{
 		LOG("Failed to create D3D12 command list. HRESULT: 0x%08X",
@@ -162,18 +169,64 @@ D3D12Module::D3D12Module(HWND hwnd): hwnd(hwnd) {}
 
 void D3D12Module::preRender()
 {
-	if (fenceValue != 0)
+	/*if (fenceValue != 0)
 	{
 		HRESULT hr = fence->SetEventOnCompletion(fenceValue, fenceEvent);
 		DWORD waitResult = WaitForSingleObject(fenceEvent, INFINITE);
 	}
 
-	commandAllocator->Reset();
+	commandAllocator->Reset();*/
+
+	currentIndex = swapChain->GetCurrentBackBufferIndex();
+	WaitForFence(_fenceValues[currentIndex]);
+	commandAllocators[currentIndex]->Reset();
 }
+
+void D3D12Module::render()
+{
+	currentIndex = swapChain->GetCurrentBackBufferIndex();
+	commandList->Reset(commandAllocators[currentIndex].Get(), nullptr);
+
+	auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(backBuffers[currentIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+	commandList->ResourceBarrier(1, &barrier);
+	
+	HRESULT hrClose = commandList->Close();
+	if (FAILED(hrClose))
+	{
+		LOG("Failed to close command list");
+		return;
+	}
+
+	ID3D12CommandList* commandLists[] = { commandList.Get() };
+	commandQueue->ExecuteCommandLists(1, commandLists);
+
+	swapChain->Present(1, 0);
+
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtvHeap->GetCPUDescriptorHandleForHeapStart(), currentIndex, rtvDescriptorSize);
+
+	const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f }; // RGBA
+
+	commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+
+}
+
 void D3D12Module::postRender()
 {
-	++fenceValue;
-	HRESULT hr = commandQueue->Signal(fence.Get(), fenceValue);
+	/*++fenceValue;
+	HRESULT hr = commandQueue->Signal(fence.Get(), fenceValue);*/
+
+	commandQueue->Signal(fence.Get(), ++fenceValue);
+	currentIndex = swapChain->GetCurrentBackBufferIndex();
+	_fenceValues[currentIndex] = fenceValue;
+}
+
+void D3D12Module::WaitForFence(UINT64 fenceValues)
+{
+	if (fence->GetCompletedValue() < fenceValues)
+	{
+		HRESULT hr = fence->SetEventOnCompletion(fenceValues, fenceEvent);
+		DWORD waitResult = WaitForSingleObject(fenceEvent, INFINITE);
+	}
 }
 
 bool D3D12Module::cleanUp()
@@ -191,4 +244,9 @@ bool D3D12Module::cleanUp()
 		fenceEvent = nullptr;
 	}
 	return true;
+}
+
+void D3D12Module::renderExercise()
+{
+	// Implement your exercise rendering logic here
 }
