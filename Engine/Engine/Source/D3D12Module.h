@@ -11,7 +11,7 @@ public:
 	void postRender() override;
 	void WaitForFence(UINT64 fenceValues);
 	bool cleanUp() override;
-	void renderExercise();
+	virtual void RenderExercise();
 
 private:
 	ComPtr<IDXGIFactory6> factory;
