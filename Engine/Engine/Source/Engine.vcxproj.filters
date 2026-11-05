@@ -21,6 +21,7 @@
     <ClCompile Include="SimpleMath.cpp" />
     <ClCompile Include="D3D12Module.cpp" />
     <ClCompile Include="Exercise1.cpp" />
+    <ClCompile Include="Clock.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3rdParty\imgui-1.89.8\backends\imgui_impl_win32.h" />
@@ -48,6 +49,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="D3D12Module.h" />
     <ClInclude Include="Exercise1.h" />
+    <ClInclude Include="Clock.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Engine.rc" />

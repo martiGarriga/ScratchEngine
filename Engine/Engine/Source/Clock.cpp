@@ -1,0 +1,31 @@
+#include "Clock.h"
+#include <Windows.h>
+#include <chrono>
+
+Clock::Clock()
+{
+	
+}
+
+void Clock::Reset()
+{
+	Now();
+}
+
+void Clock::Tick() 
+{
+
+
+	//std::chrono::steady_clock;
+}
+
+int Clock::Now()
+{
+	QueryPerformanceCounter(&ticks);
+	QueryPerformanceFrequency(&frequency);
+	/*std::chrono::system_clock::now();
+	std::chrono::duration<LARGE_INTEGER, std::chrono::milliseconds::period>;
+	std::chrono::duration<LARGE_INTEGER, std::chrono::milliseconds::rep>;*/
+	
+	return 0;
+}
