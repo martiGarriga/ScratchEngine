@@ -204,10 +204,9 @@ void D3D12Module::render()
 	commandList->ResourceBarrier(1, &barrierToTarget);
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtvHeap->GetCPUDescriptorHandleForHeapStart(), currentIndex, rtvDescriptorSize);
-	const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f }; // RGBA
+	const float clearColor[] = { 1.0f, 0.0f, 0.0f, 1.0f }; // RGBA
 	commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
-	RenderExercise();
 	
 	auto barrierToPresent = CD3DX12_RESOURCE_BARRIER::Transition(backBuffers[currentIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	commandList->ResourceBarrier(1, &barrierToPresent);
@@ -266,9 +265,4 @@ bool D3D12Module::cleanUp()
 		fenceEvent = nullptr;
 	}
 	return true;
-}
-
-void D3D12Module::RenderExercise()
-{
-	// Implement your exercise rendering logic here
 }
