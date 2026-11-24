@@ -32,6 +32,8 @@ bool D3D12Module::init()
 		return false;
 	}
 
+	resources.init(device.Get(), commandList.Get());// Initialize the resources module with the device and command list
+
 	//CREATING COMMAND QUEUE
 	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
 	queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
@@ -204,9 +206,10 @@ void D3D12Module::render()
 	commandList->ResourceBarrier(1, &barrierToTarget);
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtvHeap->GetCPUDescriptorHandleForHeapStart(), currentIndex, rtvDescriptorSize);
-	const float clearColor[] = { 1.0f, 0.0f, 0.0f, 1.0f }; // RGBA
+	const float clearColor[] = { 0.05f, 0.05f, 0.05f, 1.0f }; // RGBA
 	commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
+	renderExercise();
 	
 	auto barrierToPresent = CD3DX12_RESOURCE_BARRIER::Transition(backBuffers[currentIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	commandList->ResourceBarrier(1, &barrierToPresent);
@@ -265,4 +268,12 @@ bool D3D12Module::cleanUp()
 		fenceEvent = nullptr;
 	}
 	return true;
+}
+
+void D3D12Module::Fush()
+{
+	commandQueue->Signal(fence.Get(), ++fenceValue);
+	fence->SetEventOnCompletion(fenceValue, fenceEvent);
+	WaitForSingleObject(fenceEvent, INFINITE);
+
 }

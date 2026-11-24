@@ -1,5 +1,6 @@
 #pragma once
 #include "Module.h"
+#include "ModuleResources.h"
 
 class D3D12Module : public Module 
 {
@@ -30,4 +31,21 @@ private:
 	UINT64 _fenceValues[bufferCount] = { 0 }; // Array to hold fence values for each buffer
 	HANDLE fenceEvent = nullptr;
 	UINT currentIndex = 0; // Current back buffer index
+
+	ModuleResources resources;
+
+protected:
+	virtual void renderExercise() = 0; // Pure virtual function to be implemented by derived classes
+	ID3D12Device5* getDevice() const
+	{
+		return device.Get();
+	}
+
+	ID3D12GraphicsCommandList* getCommandList() const
+	{
+		return commandList.Get();
+	}
+	
+	void Fush();
+	
 };
