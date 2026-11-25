@@ -46,6 +46,19 @@ protected:
 		return commandList.Get();
 	}
 	
-	void Fush();
+	void Flush();
+
+	ID3D12CommandQueue* getCommandQueue() const
+	{
+		return commandQueue.Get();
+	}
+
+	void beginResourceCommands();
+	void executeResourceCommands();
+
+	ModuleResources& getResources()
+	{
+		return resources;
+	}
 	
 };

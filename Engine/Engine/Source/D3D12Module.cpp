@@ -32,8 +32,6 @@ bool D3D12Module::init()
 		return false;
 	}
 
-	resources.init(device.Get(), commandList.Get());// Initialize the resources module with the device and command list
-
 	//CREATING COMMAND QUEUE
 	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
 	queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
@@ -141,6 +139,8 @@ bool D3D12Module::init()
 			static_cast<unsigned int>(hrCommandList));
 		return false;
 	}
+
+	resources.init(device.Get(), commandList.Get());// Initialize the resources module with the device and command list
 
 	//CLOSING COMMAND LIST
 	HRESULT hrClose = commandList->Close();
@@ -270,10 +270,36 @@ bool D3D12Module::cleanUp()
 	return true;
 }
 
-void D3D12Module::Fush()
+void D3D12Module::Flush()
 {
 	commandQueue->Signal(fence.Get(), ++fenceValue);
 	fence->SetEventOnCompletion(fenceValue, fenceEvent);
 	WaitForSingleObject(fenceEvent, INFINITE);
 
+}
+
+void D3D12Module::beginResourceCommands()
+{
+	commandAllocators[0]->Reset();
+
+	commandList->Reset(
+		commandAllocators[0].Get(),
+		nullptr
+	);
+}
+
+void D3D12Module::executeResourceCommands()
+{
+	commandList->Close();
+
+	ID3D12CommandList* commandLists[] = {
+		commandList.Get()
+	};
+
+	commandQueue->ExecuteCommandLists(
+		1,
+		commandLists
+	);
+
+	Flush();
 }

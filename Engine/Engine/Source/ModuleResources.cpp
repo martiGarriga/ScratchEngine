@@ -1,5 +1,6 @@
 #include "Globals.h"
 #include "ModuleResources.h"
+#include <cassert>
 
 void ModuleResources::init(ID3D12Device* device,ID3D12GraphicsCommandList* commandList)
 {
@@ -33,8 +34,14 @@ void ModuleResources::CreateDefaultBuffer(UINT64 bufferSize,const void* cpuData,
 {
     auto defaultHeap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
-    device->CreateCommittedResource(
-        &defaultHeap,D3D12_HEAP_FLAG_NONE,&bufferDesc,D3D12_RESOURCE_STATE_COPY_DEST,nullptr,IID_PPV_ARGS(&buffer));
+
+    HRESULT hr = device->CreateCommittedResource(&defaultHeap,D3D12_HEAP_FLAG_NONE,&bufferDesc,D3D12_RESOURCE_STATE_COMMON,nullptr,IID_PPV_ARGS(&buffer)); 
+
+    if (FAILED(hr))
+    {
+        OutputDebugStringA("Failed to create DEFAULT buffer\n");
+        return;
+    }
 
     auto uploadHeap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
     device->CreateCommittedResource(

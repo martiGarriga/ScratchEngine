@@ -61,4 +61,8 @@
   <ItemGroup>
     <None Include="SimpleMath.inl" />
   </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Exercise2VS.hlsl" />
+    <FxCompile Include="Exercise2PS.hlsl" />
+  </ItemGroup>
 </Project>

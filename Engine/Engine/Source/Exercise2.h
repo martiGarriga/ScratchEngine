@@ -9,4 +9,14 @@ public:
 
     bool init() override;
     void renderExercise() override;
+
+private:
+    struct Vertex
+    {
+        float x, y, z;
+    };
+
+    ComPtr<ID3D12Resource> vertexBuffer;
+    D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
+    ComPtr<ID3D12RootSignature> rootSignature;
 };
