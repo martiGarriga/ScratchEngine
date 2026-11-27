@@ -60,5 +60,14 @@ protected:
 	{
 		return resources;
 	}
+
+	void getWindowSize(UINT& width, UINT& height) const
+	{
+		DXGI_SWAP_CHAIN_DESC desc = {};
+		swapChain->GetDesc(&desc);
+
+		width = desc.BufferDesc.Width;
+		height = desc.BufferDesc.Height;
+	}
 	
 };

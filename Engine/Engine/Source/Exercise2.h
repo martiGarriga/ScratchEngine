@@ -19,4 +19,5 @@ private:
     ComPtr<ID3D12Resource> vertexBuffer;
     D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
     ComPtr<ID3D12RootSignature> rootSignature;
+    ComPtr<ID3D12PipelineState> pipelineState;
 };

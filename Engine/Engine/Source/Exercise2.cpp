@@ -1,5 +1,6 @@
 #include "Globals.h"
 #include "Exercise2.h"
+#include "ReadData.h"
 
 Exercise2::Exercise2(HWND hwnd) : D3D12Module(hwnd)
 {
@@ -65,16 +66,45 @@ bool Exercise2::init()
         return false;
     }
 
-    hr = getDevice()->CreateRootSignature(
-        0,
-        signature->GetBufferPointer(),
-        signature->GetBufferSize(),
-        IID_PPV_ARGS(&rootSignature)
-    );
-
+    hr = getDevice()->CreateRootSignature(0,signature->GetBufferPointer(),signature->GetBufferSize(),IID_PPV_ARGS(&rootSignature));
     if (FAILED(hr))
     {
         OutputDebugStringA("Failed to create Root Signature\n");
+        return false;
+    }
+
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+    psoDesc.pRootSignature = rootSignature.Get();
+
+    auto dataVS = DX::ReadData(L"Exercise2VS.cso");
+    auto dataPS = DX::ReadData(L"Exercise2PS.cso");
+
+    psoDesc.VS = { dataVS.data(), dataVS.size() };
+    psoDesc.PS = { dataPS.data(), dataPS.size() };
+
+    D3D12_INPUT_ELEMENT_DESC layout[] =
+    {
+        {
+            "MY_POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0
+        }
+    };
+    psoDesc.InputLayout =
+    {
+        layout,sizeof(layout) / sizeof(D3D12_INPUT_ELEMENT_DESC)
+    };
+
+    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+    psoDesc.NumRenderTargets = 1;
+    psoDesc.SampleDesc = { 1, 0 };
+    psoDesc.SampleMask = 0xffffffff;
+    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+
+    bool GPSCreated = SUCCEEDED(getDevice()->CreateGraphicsPipelineState(&psoDesc,IID_PPV_ARGS(&pipelineState)));
+    if (!GPSCreated)
+    {
+        OutputDebugStringA("Failed to create Graphics Pipeline State\n");
         return false;
     }
 
@@ -83,5 +113,23 @@ bool Exercise2::init()
 
 void Exercise2::renderExercise()
 {
+    ID3D12GraphicsCommandList* commandList = getCommandList();
 
+    commandList->SetPipelineState(pipelineState.Get());
+    commandList->SetGraphicsRootSignature(rootSignature.Get());
+    commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
+
+    UINT windowWidth = 0;
+    UINT windowHeight = 0;
+
+    getWindowSize(windowWidth, windowHeight);
+
+    D3D12_VIEWPORT viewport{0.0f,0.0f,float(windowWidth),float(windowHeight),0.0f,1.0f};
+    commandList->RSSetViewports(1, &viewport);
+
+    D3D12_RECT scissor{0,0,(LONG)windowWidth,(LONG)windowHeight};
+    commandList->RSSetScissorRects(1, &scissor);
+
+    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    commandList->DrawInstanced(3, 1, 0, 0);
 }
